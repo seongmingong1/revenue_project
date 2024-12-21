@@ -1,0 +1,22 @@
+# Core dependencies
+apache-airflow>=2.10.2
+mysqlclient
+pymysql
+mysql-connector-python
+
+# Data processing
+pandas
+numpy
+
+# Environment and configuration
+python-dotenv
+
+# API and external services
+forex-python
+requests
+
+# Date and time handling
+pendulum
+
+# Excel file handling
+openpyxl
