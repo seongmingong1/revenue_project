@@ -1,6 +1,6 @@
-# Lesson Revenue Analysis Pipeline
+# Revenue Analysis Pipeline
 
-An automated lesson revenue analysis pipeline that processes Excel data to generate daily/weekly/monthly revenue reports and sends them via email.
+An automated evenue analysis pipeline that processes Excel data to generate daily/weekly/monthly revenue reports and sends them via email.
 
 ## Project Structure
 ```
@@ -16,8 +16,8 @@ lesson_revenue/
 ```
 ## Key Features
 
-- **Automated Data Collection**: Extracts latest lesson data from Excel files
-- **Multi-Currency Support**: Automatic conversion between USD, EUR, RUB, KRW
+- **Automated Data Collection**: Extracts latest revenue data from Excel files
+- **Multi-Currency Support**: Automatic conversion between USD, EUR, RUB
 - **Revenue Analysis**: Daily, weekly, and monthly revenue aggregation
 - **Automated Reporting**: Generates CSV reports and sends via email
 
@@ -32,14 +32,14 @@ lesson_revenue/
 
 ## Database Schema
 
-### Lesson Table
+### income Table
 - `id`: INT (Primary Key, Auto Increment)
 - `student_id`: VARCHAR(255)
 - `lesson_date`: DATE
 - `lesson_type`: VARCHAR(255)
 - `student_name`: VARCHAR(255)
 
-### Students Table
+### client Table
 - `student_id`: VARCHAR(255) (Primary Key)
 - `fee`: DECIMAL
 - `currency`: VARCHAR(10)
