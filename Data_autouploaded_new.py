@@ -1,6 +1,6 @@
 
 """
-Main DAG file for automating lesson data processing and revenue calculation
+Main DAG file for automating income data processing and revenue calculation
 수업 데이터 처리 및 수익 계산 자동화를 위한 메인 DAG 파일
 """
 
@@ -29,14 +29,14 @@ logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler('lesson_etl.log'),
+        logging.FileHandler('income_etl.log'),
         logging.StreamHandler()
     ]
 )
 pymysql.install_as_MySQLdb()
 load_dotenv()
 
-file_path = Variable.get("lesson_data_path", default_var="/opt/airflow/dags/lesson_data")
+file_path = Variable.get("income_data_path", default_var="/opt/airflow/dags/income_data")
 Config.update_file_path(file_path)
 
 
@@ -104,7 +104,7 @@ def get_latest_file(folder_path):
 
 def upload_mysql(file_path):
     """
-    Reads lesson data from Excel file and uploads to MySQL database
+    Reads income data from Excel file and uploads to MySQL database
     Excel 파일에서 수업 데이터를 읽어서 MySQL 데이터베이스에 업로드
     
     Args:
@@ -114,7 +114,7 @@ def upload_mysql(file_path):
     1. Connects to database
     2. Gets latest Excel file
     3. Validates data format
-    4. Inserts data into lesson table
+    4. Inserts data into income table
     """
     connection = connect_to_db()
     if connection is None: 
@@ -128,21 +128,21 @@ def upload_mysql(file_path):
             raise ValueError("No excel file found in directory")
         
         df = pd.read_excel(excel_file, engine='openpyxl')
-        validate_lesson_data(df)
+        validate_income_data(df)
 
         cursor = connection.cursor()
 
         for _, row in df.iterrows():
-            lesson_date = pd.to_datetime(row['lesson_date']).strftime('%Y-%m-%d')
+            income_date = pd.to_datetime(row['income_date']).strftime('%Y-%m-%d')
             insert_query = """
-            INSERT IGNORE INTO lesson (student_id, lesson_date, lesson_type, student_name)
+            INSERT IGNORE INTO income (client_id, income_date, income_type, client_name)
             VALUES (%s, %s, %s, %s)
             """
             cursor.execute(insert_query, (
-                row['student_id'],
-                lesson_date,
-                row['lesson_type'],
-                row['student_name']
+                row['client_id'],
+                income_date,
+                row['income_type'],
+                row['client_name']
                 ))
     
         connection.commit()
@@ -159,28 +159,28 @@ def upload_mysql(file_path):
             connection.close()
 
 
-def validate_lesson_data(df): 
+def validate_income_data(df): 
     """
     Validates the required columns and data format in data
     데이터의 필수 컬럼과 데이터 형식 검증
     
     Args:
-        df (pandas.DataFrame): DataFrame containing lesson data
+        df (pandas.DataFrame): DataFrame containing income data
         
     Raises:
         ValueError: If required columns missing or data format invalid
     """
-    required_columns = ['student_id', 'lesson_date', 'lesson_type','student_name' ]
+    required_columns = ['client_id', 'income_date', 'income_type','client_name' ]
     missing_columns = [col for col in required_columns if col not in df.columns]
     
     if missing_columns: 
         raise ValueError(f"requeired columns have been missed: {missing_columns}")
     
-    if not pd.to_datetime(df['lesson_date'], errors='coerce').notna().all():
-        raise ValueError("invaild data format in 'lesson_date'")
+    if not pd.to_datetime(df['income_date'], errors='coerce').notna().all():
+        raise ValueError("invaild data format in 'income_date'")
     
-    if df['student_id'].isnull().any():
-        raise ValueError("Null Value in student_id")
+    if df['client_id'].isnull().any():
+        raise ValueError("Null Value in client_id")
 
 def get_exchange_rates(): 
     """
@@ -228,11 +228,11 @@ def get_exchange_rates():
 
 def calculate_daily_revenue(ti):
     """
-    Calculates daily revenue from lesson data with currency conversion
+    Calculates daily revenue from income data with currency conversion
     수업 데이터로부터 일일 수익을 계산하고 환율을 적용
     
     Process:
-    1. Fetches student and lesson data
+    1. Fetches client and income data
     2. Merges datasets
     3. Applies exchange rates
     4. Calculates total revenue in EUR and KRW
@@ -244,18 +244,18 @@ def calculate_daily_revenue(ti):
         conn = hook.get_conn()
 
 
-        students_df = pd.read_sql("SELECT * FROM students", conn)
-        lessons_df = pd.read_sql("SELECT * FROM lesson", conn)
+        clients_df = pd.read_sql("SELECT * FROM clients", conn)
+        incomes_df = pd.read_sql("SELECT * FROM income", conn)
         conn.close()
 
-        merged_df = pd.merge(lessons_df, students_df, on ='student_id')
-        merged_df['lesson_date'] = pd.to_datetime(merged_df['lesson_date'], errors='coerce')
+        merged_df = pd.merge(incomes_df, clients_df, on ='client_id')
+        merged_df['income_date'] = pd.to_datetime(merged_df['income_date'], errors='coerce')
 
         rates = get_exchange_rates()
 
 
         #daily revenue
-        daily_revenue = merged_df.groupby(['lesson_date','currency']).apply(lambda x: (x['fee']).sum()).unstack()
+        daily_revenue = merged_df.groupby(['income_date','currency']).apply(lambda x: (x['fee']).sum()).unstack()
         daily_revenue['total_eur'] = (
             daily_revenue['USD'].fillna(0) * rates['usd_to_eur'] +
             daily_revenue['RUB'].fillna(0) * rates['rub_to_eur'] + 
@@ -296,7 +296,7 @@ def calculate_weekly_revenue(ti):
         daily_revenue_path = ti.xcom_pull(key='daily_revenue_path', task_ids='daily_task') 
         daily_revenue = pd.read_csv(daily_revenue_path, index_col=0)
         logging.info(f"Columns in daily_revenue: {daily_revenue.columns.tolist()}")
-        #daily_revenue['lesson_date'] = pd.to_datetime(daily_revenue['lesson_date'])
+        #daily_revenue['income_date'] = pd.to_datetime(daily_revenue['income_date'])
         daily_revenue.index = pd.to_datetime(daily_revenue.index)
 
         weekly_revenue = daily_revenue.groupby(pd.Grouper(freq='W-SUN')).sum()
@@ -383,7 +383,7 @@ def save_to_csv(ti):
 # DAG 정의 
 """
     Task sequence:
-    1. Upload lesson data from Excel
+    1. Upload income data from Excel
     2. Calculate daily revenue
     3. Calculate weekly summary
     4. Calculate monthly summary
@@ -408,7 +408,7 @@ with DAG(
         task_id = 'upload_task',
         python_callable=upload_mysql,
         op_args=[Config.FILE_PATH]
-        #op_args=[os.path.join(os.path.dirname(__file__), 'lesson_data')]
+        #op_args=[os.path.join(os.path.dirname(__file__), 'income_data')]
 
     )
 
