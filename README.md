@@ -1,15 +1,15 @@
 # Revenue Analysis Pipeline
 
-An automated evenue analysis pipeline that processes Excel data to generate daily/weekly/monthly revenue reports and sends them via email.
+An automated revenue analysis pipeline that processes Excel data to generate daily/weekly/monthly revenue reports and sends them via email.
 
 ## Project Structure
 ```
-lesson_revenue/
+income_revenue/
 │
 ├── dags/
 │   ├── Data_autouploaded_new.py    # Main DAG file
 │   ├── config.py                   # Configuration
-│   └── lesson_data/                # Data directory
+│   └── income_data/                # Data directory
 │
 ├── docker-compose.yaml
 └── Dockerfile
@@ -34,13 +34,13 @@ lesson_revenue/
 
 ### income Table
 - `id`: INT (Primary Key, Auto Increment)
-- `student_id`: VARCHAR(255)
-- `lesson_date`: DATE
-- `lesson_type`: VARCHAR(255)
-- `student_name`: VARCHAR(255)
+- `client_id`: VARCHAR(255)
+- `income_date`: DATE
+- `income_type`: VARCHAR(255)
+- `client_name`: VARCHAR(255)
 
 ### client Table
-- `student_id`: VARCHAR(255) (Primary Key)
+- `client_id`: VARCHAR(255) (Primary Key)
 - `fee`: DECIMAL
 - `currency`: VARCHAR(10)
 
