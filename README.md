@@ -76,7 +76,7 @@ SMTP settings (for email)
 API_KEY (for exchange rates)
 
 ## Execution Results 
-Runs automatically at midnight daily, generating:
+Runs automatically daily, generating:
 <img width="1196" height="752" alt="image" src="https://github.com/user-attachments/assets/282abe05-8f25-4953-8270-e9c470624898" />
 * daily_revenue.csv
 * weekly_revenue.csv
